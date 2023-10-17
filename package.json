@@ -8,7 +8,9 @@
     "url": "https://joao-peterson.github.io"
   },
   "scripts": {
-    "build": "yarn tsc && cp -r -t dist/ manifest.json images css"
+    "build": "yarn tsc && yarn dist && yarn package",
+    "dist": "cp -r -t dist/ manifest.json images css",
+    "package": "zip -r package.zip dist/"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.246",
