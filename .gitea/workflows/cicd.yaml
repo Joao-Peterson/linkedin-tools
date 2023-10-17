@@ -16,6 +16,9 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v3
 
+      - name: Install deps
+        run: yarn install
+
       - name: Build
         run: yarn build
 
