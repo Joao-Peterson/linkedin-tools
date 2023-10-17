@@ -3,8 +3,6 @@ name: cicd
 
 on:
   push:
-    branches: [master]
-    # only on vx.x.x versions 
     tags: [ "v**" ]
   
 defaults:
@@ -12,7 +10,7 @@ defaults:
     shell: sh
 
 jobs:
-  buildNdeploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
