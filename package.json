@@ -1,0 +1,19 @@
+{
+  "name": "linkedin-tools",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": {
+    "name": "Peterson",
+    "email": "peterson.sheff.dev@gmail.com",
+    "url": "https://joao-peterson.github.io"
+  },
+  "scripts": {
+    "build": "yarn tsc && cp -r -t dist/ manifest.json images css"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.246",
+    "chrome-types": "^0.1.231",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {}
+}
