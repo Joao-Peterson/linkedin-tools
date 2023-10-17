@@ -1,6 +1,6 @@
 # Linkedin Tools
 
-Chrome extension that brings more tools for Linkdin, like better downloads and other stuff.
+Chrome extension that brings more tools for Linkedin, like better downloads and other stuff.
 
 ![](images/article.png)
 

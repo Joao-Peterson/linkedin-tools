@@ -29,13 +29,6 @@
 	},
 	"minimum_chrome_version": "114",
 	"content_scripts": [
-		// {
-		// 	"js": ["scripts/download.js"],
-		// 	"run_at": "document_end",
-		// 	"matches": [
-		// 		"https://www.linkedin.com/feed/"
-		// 	]
-		// },
 		{
 			"css": ["css/style.css"],
 			"js": ["scripts/download.js"],

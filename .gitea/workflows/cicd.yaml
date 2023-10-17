@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json  
+name: cicd
+
+on:
+  push:
+    branches: [master]
+    # only on vx.x.x versions 
+    tags: [ "v**" ]
+  
+defaults:
+  run:
+    shell: sh
+
+jobs:
+  buildNdeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Build
+        run: yarn build
+
+      - name: Save package artifact
+        uses: "actions/upload-artifact@v3"
+        with:
+          name: "package.zip"
+          path: "package.zip"

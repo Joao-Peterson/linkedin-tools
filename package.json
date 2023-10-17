@@ -10,7 +10,8 @@
   "scripts": {
     "build": "yarn tsc && yarn dist && yarn package",
     "dist": "cp -r -t dist/ manifest.json images css",
-    "package": "zip -r package.zip dist/"
+    "package": "zip -r package.zip dist/",
+    "clear": "rm -rd dist/ package.zip"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.246",
