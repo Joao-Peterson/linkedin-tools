@@ -1,22 +1,30 @@
 {
   "name": "linkedin-tools",
+  "description": "Set of tools for Linkedin",
   "version": "1.0.0",
   "license": "MIT",
+  "private": true,
   "author": {
     "name": "Peterson",
     "email": "peterson.sheff.dev@gmail.com",
     "url": "https://joao-peterson.github.io"
   },
   "scripts": {
-    "build": "yarn tsc && yarn dist && yarn package",
-    "dist": "cp -r -t dist/ manifest.json images css",
+    "build": "yarn webpack",
     "package": "zip -r package.zip dist/",
     "clear": "rm -rd dist/ package.zip"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.246",
     "chrome-types": "^0.1.231",
-    "typescript": "^5.2.2"
+    "comment-json": "^4.2.3",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.8.1",
+    "html-loader": "^4.2.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.2.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {}
 }

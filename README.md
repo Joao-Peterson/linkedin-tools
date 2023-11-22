@@ -2,6 +2,8 @@
 
 Chrome extension that brings more tools for Linkedin, like better downloads and other stuff.
 
+[Download it here!](https://chrome.google.com/webstore/detail/linkedin-tools/kcnmjginaijndlfgmgkhgbjjjagnaipi)
+
 ![](images/article.png)
 
 # Features

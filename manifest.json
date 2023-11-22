@@ -2,8 +2,7 @@
 	"$schema": "http://json.schemastore.org/chrome-manifest",
 	"manifest_version": 3,
 	"name": "Linkedin Tools",
-	"description": "Set of tools for Linkedin",
-	"version": "1.0.0",
+	"minimum_chrome_version": "114",
 	"icons": {
 		"16": "images/icon16.png",
 		"32": "images/icon32.png",
@@ -24,17 +23,32 @@
 		}
 	],
 	"background": {
-		"service_worker": "scripts/downloadWorker.js",
+		"service_worker": "src/downloadWorker.js",
 		"type": "module"
 	},
-	"minimum_chrome_version": "114",
 	"content_scripts": [
+		// on feed
 		{
 			"css": ["css/style.css"],
-			"js": ["scripts/download.js"],
+			"js": [
+				"src/main.js",
+				"src/xhrIntercept.js"
+			],
 			"run_at": "document_idle",
 			"matches": [
-				"https://www.linkedin.com/posts/*"
+				"https://www.linkedin.com/feed/*"
+			]
+		},
+		// single posts
+		{
+			"css": ["css/style.css"],
+			"js": [
+				"src/main.js"
+			],
+			"run_at": "document_idle",
+			"matches": [
+				"https://www.linkedin.com/posts/*",
+				"https://www.linkedin.com/feed/update/*"
 			]
 		}
 	]
