@@ -5,15 +5,15 @@ import { jsonParseResponse } from "./utils";
 let posts: LnPost[] = [];
 
 // grab first posts from the html directly
-addEventListener("DOMContentLoaded", () => {
-	console.log("loaded");
-	
+addEventListener("DOMContentLoaded", () => {	
 	for(let code of Array.from(document.getElementsByTagName('code'))){
-		if(!code.id.includes('bpr-guid')) continue;
+		if(!code.id.startsWith('bpr-guid')) continue;
 		if(!code.textContent) continue;
 		
 		try {
-			let update = LnPost.parseLinkedinUpdate(JSON.parse(code.textContent));
+			let json = JSON.parse(code.textContent);
+			console.log("DOM includes: " + json);
+			let update = LnPost.parseLinkedinUpdate(json);
 			if(update){
 				posts = posts.concat(update);
 				console.log(posts);
@@ -30,8 +30,7 @@ addEventListener("DOMContentLoaded", () => {
 xhrIntercept(/voyager\/api\/feed\/updatesV2/, (response, type) => {
 	jsonParseResponse(response, type)
 	.then((json) => {
-		console.log(json);
-	
+		console.log("UpdateV2 includes: " + json);
 		let update = LnPost.parseLinkedinUpdate(json);
 		if(update){
 			posts = posts.concat(update);

@@ -11,16 +11,14 @@ export class LnPost{
 	public author: string;
 	public id: string;
 	public files: RemoteFile[] = [];
+	public externalUrl?: string;
 	public text?: string | undefined;
 
 	public include: any;
 	
 	constructor(include: any){
 		this.include = include;
-		let author = include?.actor?.name?.text;
-
-		if(!author)
-			throw "Authot not found";
+		let author = include?.actor?.name?.text ?? "Unknown";
 		
 		this.author = author;
 		this.id = "";
@@ -34,36 +32,101 @@ export class LnPost{
 		let posts: LnPost[] = [];
 
 		for(var include of LnUpdate.included){
-			try{
-				let content = include?.content;
+			// grab content type
+			let includeType: string | null | undefined = include?.$type;
+			if(!includeType) continue;
+			let contentType: string | null | undefined;
+
+			try{	
+				switch(includeType){
+					// updates
+					case "com.linkedin.voyager.feed.render.UpdateV2":
+						// content
+						contentType = include?.content?.$type;
+						// else grab carousel type
+						if(!contentType) contentType = include?.carouselContent?.$type;
+						// else grab lead
+						if(!contentType) contentType = include?.leadGenFormContentV2?.$type;
+						// else, just the text
+						if(!contentType) contentType = include?.commentary?.$type;
+						// else, suggested (aggregatedContent)
+						if(!contentType) contentType = include?.aggregatedContent?.$type;
+
+						// TODO else, reshared  "include.*resharedUpdate"
+						// if(!contentType) contentType = include?.aggregatedContent?.$type;
+
+						switch(contentType){
+							// video
+							case "com.linkedin.voyager.feed.render.LinkedInVideoComponent":
+								posts.push(new LnVideo(include, LnUpdate.included));
+							break;
+		
+							// carousel
+							case "com.linkedin.voyager.feed.render.CarouselContent":
+								posts.push(new LnCarousel(include));
+							break;	
+		
+							// images
+							case "com.linkedin.voyager.feed.render.ImageComponent":
+								posts.push(new LnImages(include));
+							break;							
+		
+							// image
+							case "com.linkedin.voyager.feed.render.ArticleComponent":
+								posts.push(new LnImage(include));
+							break;							
+		
+							// documents
+							case "com.linkedin.voyager.feed.render.DocumentComponent":
+								posts.push(new LnDocument(include));
+							break;							
+								
+							// text
+							case "com.linkedin.voyager.feed.render.TextComponent":
+								posts.push(new LnPost(include));
+							break;
+		
+							// lead
+							case "com.linkedin.voyager.feed.render.LeadGenFormContentV2":
+								posts.push(new LnLead(include));
+							break;
+		
+							// job offer (entity component)
+							case "com.linkedin.voyager.feed.render.EntityComponent":
+								posts.push(new LnPost(include));
+							break;
+
+							// youtube (ExternalVideoComponent)
+							case "com.linkedin.voyager.feed.render.ExternalVideoComponent":
+								posts.push(new LnExternal(include));
+							break;
 				
-				// ignore other non content types, like assets
-				if(content === undefined) continue;
-	
-				// text and reposts
-				if(content === null){
-					posts.push(new LnPost(include));
-					continue;
+							// suggested
+							case "com.linkedin.voyager.feed.render.FeedDiscoveryEntityComponent":
+							case "com.linkedin.voyager.feed.render.AggregatedContent":
+							break;
+							
+							// unknown
+							default:
+								console.warn(`Linkedin Tools: Could not parse content type '${contentType}', objectUrn: '${include?.objectUrn}'`);
+							break;
+						}
+						break;
+							
+					default:
+						console.info(`Linkedin Tools: Ignoring parse of type '${includeType}', objectUrn: '${include?.objectUrn}'`);
+					break;	
 				}
-	
-				// images
-				if(content?.images) posts.push(new LnImages(include));
-				// image
-				if(content?.largeImage) posts.push(new LnImage(include));
-				// video
-				// if(content?.['*videoPlayMetadata']) posts.push(new LnVideo(include));
-				// article
-				// if(content?.document) posts.push(new LnDocument(include));
 			}
 			catch(e){
-				console.warn("Linkedin Tools: Could not parse 'included'. " + e);
+				console.warn(`Linkedin Tools: Could not parse include type '${includeType}', objectUrn: '${include?.objectUrn}'. ` + e);
 			}
 		}
 
 		return posts;
 	}
 
-	protected imageName(): string{
+	protected uniqueName(): string{
 		return camelcase(this.author) + "-" + crypto.randomUUID();
 	}
 
@@ -71,6 +134,27 @@ export class LnPost{
 		let text: string | null | undefined = this.include?.commentary?.text?.text; 
 		return typeof text === "string" ? text : undefined;
 	} 
+}
+
+// carousel
+export class LnCarousel extends LnPost{
+	
+	constructor(include: any){		
+		super(include);
+		
+		for(var image of include?.carouselContent?.items){
+			if(!image) continue;
+
+			let root: string | null | undefined = image?.content?.image?.attributes[0]?.vectorImage?.rootUrl; 
+			let segment: string | null | undefined = image?.content?.image?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
+			if(!root || !segment) continue;
+
+			this.files.push({
+				name: this.uniqueName(),
+				url: root + segment
+			});
+		}
+	}
 }
 
 // images
@@ -87,7 +171,7 @@ export class LnImages extends LnPost{
 			if(!root || !segment) continue;
 
 			this.files.push({
-				name: this.imageName(),
+				name: this.uniqueName(),
 				url: root + segment
 			});
 		}
@@ -107,73 +191,93 @@ export class LnImage extends LnPost{
 			return;
 
 		this.files.push({
-			name: this.imageName(),
+			name: this.uniqueName(),
 			url: root + segment
+		});
+	}
+}
+
+// lead
+export class LnLead extends LnPost{
+
+	constructor(include: any){
+		super(include);
+
+		let root: string | null | undefined = include?.leadGenFormContentV2?.content?.largeImage?.attributes[0]?.vectorImage?.rootUrl; 
+		let segment: string | null | undefined = include?.leadGenFormContentV2?.content?.largeImage?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
+
+		if(!root || !segment)
+			return;
+
+		this.files.push({
+			name: this.uniqueName(),
+			url: root + segment
+		});
+	}
+}
+
+// article pdf like
+export class LnDocument extends LnPost{
+	constructor(include: any){
+		super(include);
+
+		let url = include?.content?.document?.transcribedDocumentUrl;
+		let title = include?.content?.document?.title;
+
+		if(!url || ! title)
+			return;
+
+		this.files.push({
+			name: title,
+			url: url
 		});
 	}
 }
 
 // video
 export class LnVideo extends LnPost{
-	// constructor(include: any){
-	// 	super();
+	constructor(include: any, included: any){
+		super(include);
 		
-	// }
+		let metadata = include?.content?.['*videoPlayMetadata'];
 
-	// "content": {
-	// 	"headlineBackgroundColor": "DEFAULT",
-	// 	"mediaDisplayVariant": "CLASSIC",
-	// 	"*videoPlayMetadata": "urn:li:digitalmediaAsset:D4E05AQGDBCR12IRwVw",
-	// 	"tapTargets": [],
-	// 	"$type": "com.linkedin.voyager.feed.render.LinkedInVideoComponent"
-	//   },
+		for(let inc of included){
+			let type: string | undefined | null = inc.$type;
+			if(!type) continue;
 
-	// cross referenced asset:
-	// {
-	// 	"thumbnail": {
-	// 	  "artifacts": [
-	// 		{
-	// 		  "width": 1280,
-	// 		  "fileIdentifyingUrlPathSegment": "high/0/1700057547285?e=1701176400&v=beta&t=ciKcQsv0uMc_hHgvLPjyNfnMoB_sjLVWQ1okRxG7ZPs",
-	// 		  "expiresAt": 1701176400000,
-	// 		  "height": 720,
-	// 		  "$type": "com.linkedin.common.VectorArtifact"
-	// 		},
-	// 		{
-	// 		  "width": 640,
-	// 		  "fileIdentifyingUrlPathSegment": "low/0/1700057546030?e=1701176400&v=beta&t=xbEPlYelLTng_xt0kbs7oBG6bo9mT5AmJJrMdVINjus",
-	// 		  "expiresAt": 1701176400000,
-	// 		  "height": 360,
-	// 		  "$type": "com.linkedin.common.VectorArtifact"
-	// 		}
-	// 	  ],
-	// 	  "rootUrl": "https://media.licdn.com/dms/image/D4E05AQGDBCR12IRwVw/videocover-",
-	// 	  "$type": "com.linkedin.common.VectorImage"
-	// 	},
-	// 	"progressiveStreams": [
-	// 	  {
-	// 		"streamingLocations": [
-	// 		  {
-	// 			"url": "https://dms.licdn.com/playlist/vid/D4E05AQGDBCR12IRwVw/mp4-720p-30fp-crf28/0/1700057581004?e=1701176400&v=beta&t=YCropMkDP8VpIeXZ6lJ4DTRbmoajQVTY7wZ-VEjca1I",
-	// 			"expiresAt": 1701176400000,
-	// 			"$type": "com.linkedin.videocontent.StreamingLocation"
-	// 		  }
-	// 		],
-	// 		"size": 0,
-	// 		"bitRate": 232223,
-	// 		"width": 1280,
-	// 		"mediaType": "video/mp4",
-	// 		"height": 720,
-	// 		"$type": "com.linkedin.videocontent.ProgressiveDownloadMetadata"
-	// 	  },
+			if(type.includes("com.linkedin.videocontent.VideoPlayMetadata")){
+				let media: string | undefined | null = inc?.media;
+				if(!media) continue;
+
+				if(media != metadata) continue;
+
+				let url = inc?.progressiveStreams[0]?.streamingLocations[0]?.url;
+				if(!url) continue;
+
+				this.files.push({
+					name: this.uniqueName(),
+					url: url
+				})
+
+				break;
+			}
+		}
+	}
 }
 
-// article pdf like
-export class LnDocument extends LnPost{
-	// constructor(content: any){
-	// 	super();
-		
-	// }
+// external
+export class LnExternal extends LnPost{
+	constructor(include: any){
+		super(include);
+
+		let provider: string | undefined | null = include?.content?.provider;
+		let source: string | undefined | null = include?.content?.navigationContext?.actionTarget;
+
+		if(!provider || !source)
+			return;
+
+		this.externalUrl = source;
+	}
 }
 
 // https://www.linkedin.com/voyager/api/feed/updatesV2
