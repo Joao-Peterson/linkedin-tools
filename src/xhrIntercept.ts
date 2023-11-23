@@ -1,5 +1,5 @@
-export function xhrIntercept(urlFilter: RegExp, callback: (response: any) => void){
-	const xhrOpen = XMLHttpRequest.prototype.open.prototype;
+export function xhrIntercept(urlFilter: RegExp, callback: (response: object) => void){
+	const xhrOpen = XMLHttpRequest.prototype.open as ((method: string, requestUrl: string | URL) => void);
 
 	XMLHttpRequest.prototype.open = function (method: string, requestUrl: string | URL){
 		if(urlFilter.test(requestUrl.toString())){
@@ -9,14 +9,48 @@ export function xhrIntercept(urlFilter: RegExp, callback: (response: any) => voi
 				const xhrOnreadystatechange = this.onreadystatechange;
 
 				// override onreadystatechange
-				this.onreadystatechange = function (ev: Event){
-					const { readyState, responseText } = this;
+				this.onreadystatechange = async function (ev: Event){
+					const { readyState, response, responseType } = this;
 
 					// if ok and response text
-					if(readyState === XMLHttpRequest.DONE && responseText){
+					if(readyState === XMLHttpRequest.DONE && response){
 						try {
+							let json: object;
 							// call with response
-							callback(JSON.parse(responseText));
+							switch(responseType){
+								case "":
+								case "text":
+									json = JSON.parse(response as string);
+									if(!json)
+										throw `xhrIntercept: Response was '${responseType}' but could not be parsed as json`;
+									break;
+									
+								case "json":
+									json = response;
+									if(!json)
+										throw `xhrIntercept: Response was '${responseType}' but not a valid one`;
+								break;
+
+								case "blob":
+									json = JSON.parse(await (response as Blob).text());
+									if(!json)
+										throw `xhrIntercept: Response was '${responseType}' but could not be parsed as json`;
+								break;
+
+								case "arraybuffer":
+									json = JSON.parse(new TextDecoder('UTF8').decode(response as ArrayBuffer));
+									if(!json)
+										throw `xhrIntercept: Response was '${responseType}' but could not be parsed as json`;
+								break;
+
+								default:
+								case "document":
+									throw `xhrIntercept: Response was '${responseType}'. Don't now how to read that json`;
+								break;									
+							}			
+							
+							callback(json);
+
 						} catch (error) {
 							var msg = "";
 							if(error instanceof Error)
