@@ -1,53 +1,124 @@
+import { camelcase } from "./utils"
+
+// remote file
+export interface RemoteFile{
+	name: string;
+	url: string;
+}
+
 // post
-abstract class LnPost{
-	public static parse(LnUpdate: any): LnPost[] | null{
-		if(!LnUpdate?.included) return null;
+export class LnPost{
+	public author: string;
+	public id: string;
+	public files: RemoteFile[] = [];
+	public text?: string | undefined;
+
+	public include: any;
+	
+	constructor(include: any){
+		this.include = include;
+		let author = include?.actor?.name?.text;
+
+		if(!author)
+			throw "Authot not found";
+		
+		this.author = author;
+		this.id = "";
+
+		this.text = this.getText();
+	}
+
+	public static parseLinkedinUpdate(LnUpdate: any): LnPost[] | null{
+		if(!(LnUpdate?.included)) return null;
+
+		let posts: LnPost[] = [];
 
 		for(var include of LnUpdate.included){
-			// ignore other non conntent types, like assets
-			if(include.content === undefined) continue;
-
-			if(include.content === null){
-
+			try{
+				let content = include?.content;
+				
+				// ignore other non content types, like assets
+				if(content === undefined) continue;
+	
+				// text and reposts
+				if(content === null){
+					posts.push(new LnPost(include));
+					continue;
+				}
+	
+				// images
+				if(content?.images) posts.push(new LnImages(include));
+				// image
+				if(content?.largeImage) posts.push(new LnImage(include));
+				// video
+				// if(content?.['*videoPlayMetadata']) posts.push(new LnVideo(include));
+				// article
+				// if(content?.document) posts.push(new LnDocument(include));
 			}
-			
-			// // images
-			// if(content?.images) return new LnImages(content);
-			// // image
-			// if(content?.largeImage) return new LnLargeImage(content);
-			// // video
-			// if(content?.['*videoPlayMetadata']) return new LnVideo(content);
-			// // article
-			// if(content?.document) return new LnDocument(content);
-
+			catch(e){
+				console.warn("Linkedin Tools: Could not parse 'included'. " + e);
+			}
 		}
-		
-		return null;
+
+		return posts;
 	}
+
+	protected imageName(): string{
+		return camelcase(this.author) + "-" + crypto.randomUUID();
+	}
+
+	protected getText(): string | undefined{
+		let text: string | null | undefined = this.include?.commentary?.text?.text; 
+		return typeof text === "string" ? text : undefined;
+	} 
 }
 
 // images
-class LnImages extends LnPost{
-	constructor(content: any){
-		super();
-		
+export class LnImages extends LnPost{
+	
+	constructor(include: any){		
+		super(include);
+
+		for(var image of include?.content?.images){
+			if(!image) continue;
+
+			let root: string | null | undefined = image?.attributes[0]?.vectorImage?.rootUrl; 
+			let segment: string | null | undefined = image?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
+			if(!root || !segment) continue;
+
+			this.files.push({
+				name: this.imageName(),
+				url: root + segment
+			});
+		}
 	}
 }
 
 // image
-class LnLargeImage extends LnPost{
-	constructor(content: any){
-		super();
-		
+export class LnImage extends LnPost{
+
+	constructor(include: any){
+		super(include);
+
+		let root: string | null | undefined = include?.content?.largeImage?.attributes[0]?.vectorImage?.rootUrl; 
+		let segment: string | null | undefined = include?.content?.largeImage?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
+
+		if(!root || !segment)
+			return;
+
+		this.files.push({
+			name: this.imageName(),
+			url: root + segment
+		});
 	}
 }
 
 // video
-class LnVideo extends LnPost{
-	constructor(content: any){
-		super();
+export class LnVideo extends LnPost{
+	// constructor(include: any){
+	// 	super();
 		
-	}
+	// }
 
 	// "content": {
 	// 	"headlineBackgroundColor": "DEFAULT",
@@ -98,11 +169,11 @@ class LnVideo extends LnPost{
 }
 
 // article pdf like
-class LnDocument extends LnPost{
-	constructor(content: any){
-		super();
+export class LnDocument extends LnPost{
+	// constructor(content: any){
+	// 	super();
 		
-	}
+	// }
 }
 
 // https://www.linkedin.com/voyager/api/feed/updatesV2
