@@ -11,9 +11,6 @@ module.exports = {
 		],
 		bundle: [
 			abs("src/main.ts")
-		],
-		downloadWorker: [
-			abs("src/downloadWorker.ts")
 		]	
 	},
 	output: {

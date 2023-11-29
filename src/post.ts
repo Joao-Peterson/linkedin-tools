@@ -1,3 +1,4 @@
+import { BlobReader, BlobWriter, ZipWriter } from "@zip.js/zip.js";
 import { downloadBlob, downloadUrl } from "./downloader";
 import { camelcase } from "./utils"
 
@@ -6,6 +7,11 @@ export interface RemoteFile{
 	name: string;
 	url: string;
 }
+
+interface ZipFile {
+	path: string;
+	data: string | Buffer;
+};
 
 // posts
 export type LnPosts = Map<string, LnPost>; 
@@ -35,14 +41,33 @@ export class LnPost{
 		this.resharedEntityUrn = resharedEntityUrn ? resharedEntityUrn: undefined
 	}
 
-	public download(otherPosts: Map<string, LnPost>): Promise<void>{
+	public async download(otherPosts: Map<string, LnPost>): Promise<void>{
 		// download files first
-		if(this.files.length > 0){
-			this.files.forEach(async (file) => {
-				await downloadUrl(file.url, file.name);
-			})
+		if(this.files.length == 1){
+			return downloadUrl(this.files[0].url, this.files[0].name);
+		}
+		else if(this.files.length > 1){
+			// map all files to fetch promises and await all
+			return Promise.all(this.files.map((file) => 
+				fetch(file.url)
+				// get blob
+				.then((res) => res.blob())
+				// return blob with name
+				.then((blob) => ({name: file.name, blob: blob}))
+			))
+			// write zip
+			.then((files) => {
+				const zipWriter = new ZipWriter(new BlobWriter("application/zip"));
 
-			return Promise.resolve();
+				files.forEach((file) => {
+					zipWriter.add(file.name, new BlobReader(file.blob));
+				});
+
+				// return zip blob
+				return zipWriter.close();
+			})
+			// download zip
+			.then((zip) => downloadBlob(zip, this.uniqueName() + ".zip"));
 		}
 		// reshared content
 		else if(this.resharedEntityUrn && otherPosts.size > 1){

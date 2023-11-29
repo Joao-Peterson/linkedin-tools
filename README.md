@@ -41,3 +41,4 @@ $ yarn install && yarn build
 * adjust download icon margin, still scuffed in some screen sizes
 * make download multilpe images work
 * Add context menu to download different types of data, text, image or others
+* addd support for other pages, like profile activity and single post pages
