@@ -1,3 +1,4 @@
+// parse http response: any acording to received type
 export async function jsonParseResponse(response: any, type: XMLHttpRequestResponseType): Promise<object>{
 	let json: object;
 	// call with response
@@ -36,8 +37,16 @@ export async function jsonParseResponse(response: any, type: XMLHttpRequestRespo
 	return json;
 }
 
+// str to camelcase
 export function camelcase(str: string) {
 	return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
 		return index === 0 ? word.toLowerCase() : word.toUpperCase();
 	}).replace(/\s+/g, '');
+}
+
+// add contents from one map to another
+export function mapCat<K, V>(to: Map<K, V>, from: Map<K, V>){
+	from.forEach((v, k) => {
+		to.set(k, v);
+	})
 }

@@ -3,13 +3,14 @@ const CopyPlugin = require('copy-webpack-plugin');
 const jsonCommented = require("comment-json");
 
 module.exports = {
-	mode: "production",	
+	devtool: 'cheap-module-source-map',
+	mode: "development",	
 	entry: {
 		inject: [
 			abs("src/inject.ts")
 		],
 		bundle: [
-			abs("src/main.ts",)
+			abs("src/main.ts")
 		],
 		downloadWorker: [
 			abs("src/downloadWorker.ts")
@@ -21,12 +22,12 @@ module.exports = {
 		clean: true,
 	},
 	resolve: {
-		extensions: ['.ts', '.js']
+		extensions: ['.ts', '.tsx', '.js']
 	},
 	module: {
 		rules: [
 			{
-				test: /\.ts$/,
+				test: /\.tsx?$/,
 				use: 'ts-loader',
 				exclude: /node_modules/
 			},
@@ -45,7 +46,7 @@ module.exports = {
 				type: 'asset/resource',
 				exclude: /node_modules/
 			}
-		]
+		],
 	},
 	plugins: [
 		new CopyPlugin({patterns: [
@@ -69,8 +70,8 @@ module.exports = {
 			// css
 			{from: abs("css/style.css")},
 			// images
-			{from: abs("images/downloadDark.svg"), to: "images"},
-			{from: abs("images/downloadLight.svg"), to: "images"},
+			// {from: abs("images/downloadDark.svg"), to: "images"},
+			// {from: abs("images/downloadLight.svg"), to: "images"},
 			{from: abs("images/icon16.png"), to: "images"},
 			{from: abs("images/icon32.png"), to: "images"},
 			{from: abs("images/icon48.png"), to: "images"},
