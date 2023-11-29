@@ -8,12 +8,13 @@ Chrome extension that brings more tools for Linkedin, like better downloads and 
 
 # Features
 
-* Download article post as pdf in a single click  
-  * **Open up the actual post, not just on the feed!**
-
-* TODO:
-  * Download images in a single click  
-  * Download videos in a single click  
+* Download in a single click!
+  * Article post as pdf  
+  * Images  
+  * Videos  
+  * Post text
+  * Poll's data
+* Open up external media
 
 # Development
 
@@ -37,4 +38,7 @@ $ yarn install && yarn build
 
 # TODO
 
-* Add download button on feed posts
+* scrape first posts from dom
+* adjust download icon margin, still scuffed in some screen sizes
+* make download multilpe images work
+* Add context menu to download different types of data, text, image or others

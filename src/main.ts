@@ -3,6 +3,7 @@ import { LnPost, LnPosts } from "./post"
 import { jsonParseResponse, mapCat } from "./utils";
 import { domListenNewNodes, domNewElem, domNewElements } from "./domObserver";
 import { makeDownloadButton } from "./downloadButton";
+import { downloadUrl } from "./downloader";
 
 // posts, global
 let postsMeta: LnPosts = new Map();
@@ -45,34 +46,41 @@ xhrIntercept(/voyager\/api\/feed\/updatesV2/, (response, type) => {
 	});
 });
 
-function addButton(post: HTMLElement){
-	const buttonBar = post.getElementsByClassName("feed-shared-social-action-bar").item(0)
-	if(buttonBar)
-		console.log("buttonBarFunction");
-}
-
 let posts: Map<string, HTMLCollection> = new Map(); 
 
-// listen for changes on dom
-// grab feed
+// get the first posts from dom and add button 
+
+
+// get posts that come with 'updateV2' from dom, using 'mutationObserver', and then add the button 
 domNewElem(document, "scaffold-finite-scroll__content")
 // on feed
 .then((feed) => {
 	// listen for new nodes
 	domListenNewNodes(feed, (elements) => {
+		// add button
 		elements
 		.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent}))	// get urn and put into object
 		.filter((e) => (e.urn && e.urn.startsWith("urn:li:activity:")))						// filter out non posts
 		.map((post) => {																	// find bottom bar to insert button
 			let bottomBar = domNewElements(post.post, "feed-shared-social-action-bar");		// listen for botton buttons to render 
-			return Object.assign({}, post, {bottomBar: bottomBar});							// return new object
+			return {
+				post: post.post,
+				urn: post.urn!,
+				bottomBar: bottomBar
+			};
 		})
-		.map((e) => {console.log(`post on feed: ${e.urn}`); return e})
-		.forEach((e) => {																	// for each post
-			e.bottomBar.then((b) => {														// when bottom bar arrives
-				console.log(`bottomBar.then ${e.urn}: ${b.at(0)}`);
-				b.at(0)?.appendChild(makeDownloadButton(() => {								// add download button
-					console.log(`click from ${e.urn}`);
+		.forEach((post) => {																// for each post
+			post.bottomBar.then((bottomBar) => {											// when bottom bar arrives
+				bottomBar.at(0)?.appendChild(makeDownloadButton(() => {						// add download button
+					const meta = postsMeta.get(post.urn);									// get meta info
+					if(meta){
+						meta.download(postsMeta)
+						.then(() => console.debug(`downloaded!`))
+						.catch((err) => console.error(`error downloading: ${err}`));
+					}
+					else{
+						console.error(`No reference for '${post.urn}' in 'updateV2' data`);
+					}
 				}));
 			})
 		});

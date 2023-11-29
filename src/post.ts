@@ -1,3 +1,4 @@
+import { downloadBlob, downloadUrl } from "./downloader";
 import { camelcase } from "./utils"
 
 // remote file
@@ -28,8 +29,50 @@ export class LnPost{
 		this.urn = include.updateMetadata.urn;
 
 		this.text = this.getText();
-		let resharedEntityUrn = include?.['*resharedUpdate'];
-		this.resharedEntityUrn = !resharedEntityUrn ? undefined : resharedEntityUrn;
+		let resharedEntityUrnRaw = include?.['*resharedUpdate'];
+		let resharedEntityUrn: string | undefined | null = resharedEntityUrnRaw;
+		resharedEntityUrn = resharedEntityUrn?.match(/(urn:li:activity:\d{19})/)?.at(1);
+		this.resharedEntityUrn = resharedEntityUrn ? resharedEntityUrn: undefined
+	}
+
+	public download(otherPosts: Map<string, LnPost>): Promise<void>{
+		// download files first
+		if(this.files.length > 0){
+			this.files.forEach(async (file) => {
+				await downloadUrl(file.url, file.name);
+			})
+
+			return Promise.resolve();
+		}
+		// reshared content
+		else if(this.resharedEntityUrn && otherPosts.size > 1){
+			let reshared = otherPosts.get(this.resharedEntityUrn!);
+			if(reshared){
+				return reshared.download(otherPosts);
+			}
+			else{
+				return Promise.reject(`reshared post '${this.resharedEntityUrn}' from '${this.urn}' is not on 'otherPosts' map passed`);
+			}
+		}
+		// then open external
+		else if(this.externalUrl){
+			return new Promise<void>((res) => {
+				window.open(this.externalUrl);
+				res();
+			});
+		}
+		// then download text
+		else if(this.text){
+			let blob = new Blob([this.text], {
+				type: "text/plain"
+			});
+
+			return downloadBlob(blob, this.uniqueName() + ".txt");
+		}
+		// otherwise reject
+		else{
+			return Promise.reject();
+		}
 	}
 
 	public static parseLinkedinUpdate(LnUpdate: any): LnPosts | null{
@@ -131,6 +174,11 @@ export class LnPost{
 							case "com.linkedin.voyager.feed.render.PromoComponent":
 								post = new LnImage(include);
 							break;
+
+							// poll
+							case "com.linkedin.voyager.feed.render.PollComponent":
+								post = new LnPoll(include, LnUpdate.included);
+							break;
 				
 							// suggested
 							case "com.linkedin.voyager.feed.render.FeedDiscoveryEntityComponent":
@@ -206,7 +254,7 @@ export class LnImages extends LnPost{
 			if(!root || !segment) continue;
 
 			this.files.push({
-				name: this.uniqueName(),
+				name: this.uniqueName() + ".png",
 				url: root + segment
 			});
 		}
@@ -232,7 +280,7 @@ export class LnImage extends LnPost{
 			return;
 
 		this.files.push({
-			name: this.uniqueName(),
+			name: this.uniqueName() + ".png",
 			url: url
 		});
 	}
@@ -254,6 +302,49 @@ export class LnEvent extends LnPost{
 			name: this.uniqueName(),
 			url: root + segment
 		});
+	}
+}
+
+// poll
+export class LnPoll extends LnPost{
+
+	constructor(include: any, included: any){
+		super(include);
+
+		let summary: string | null | undefined = include?.content?.['*pollSummary']; 
+		let question: string | null | undefined = include?.content?.question?.text; 
+		let options: any[] | null | undefined = include?.content?.pollOptions;
+
+		if(!question || !options || !summary)
+			return;
+
+		let questionsArr: string[] = [];
+		for(let opt of options){
+			if(typeof opt?.option?.text === "string")
+				questionsArr.push(opt?.option?.text);
+		}
+
+		let votes: number;
+		let poll: string = question + "\n\n";
+
+		for(let inc of included){
+			if(inc?.entityUrn === summary){
+				let summaries = inc?.pollOptionSummaries;
+				votes = inc?.uniqueVotersCount;
+
+				poll += `Total votes: ${votes}\n\n`;
+				
+				for(let i = 0; i < questionsArr.length; i ++){
+					let vote = summaries[i].voteCount;
+					let percent = votes/vote*100
+					poll += `'${questionsArr[i]}': ${percent.toFixed(2)}%. Votes: ${vote}\n`
+				}
+
+				break;
+			}
+		}
+
+		this.text = poll;
 	}
 }
 
@@ -323,7 +414,7 @@ export class LnVideo extends LnPost{
 				if(!url) continue;
 
 				this.files.push({
-					name: this.uniqueName(),
+					name: this.uniqueName() + ".mp4",
 					url: url
 				})
 
