@@ -15,7 +15,7 @@ export function domListenNewNodes(rootNode: Node, callback: ((node: HTMLElement[
 	});
 }
 
-export async function domNewElements(rootNode: Node, classList: string): Promise<HTMLElement[]>{
+export async function domWaitNewElements(rootNode: Node, classList: string): Promise<HTMLElement[]>{
 	return new Promise((res, rej) => {
 		const observer = new MutationObserver(function (mutations, observer){
 			let nodes = mutations
@@ -38,6 +38,6 @@ export async function domNewElements(rootNode: Node, classList: string): Promise
 	});
 }
 
-export async function domNewElem(rootNode: Node, classList: string): Promise<HTMLElement>{
-	return (await domNewElements(rootNode, classList))[0];
+export async function domWaitNewElem(rootNode: Node, classList: string): Promise<HTMLElement>{
+	return (await domWaitNewElements(rootNode, classList))[0];
 }

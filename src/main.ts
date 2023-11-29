@@ -1,7 +1,7 @@
 import { xhrIntercept } from "./xhrIntercept";
 import { LnPost, LnPosts } from "./post"
 import { jsonParseResponse, mapCat } from "./utils";
-import { domListenNewNodes, domNewElem, domNewElements } from "./domObserver";
+import { domListenNewNodes, domWaitNewElem, domWaitNewElements } from "./domObserver";
 import { makeDownloadButton } from "./downloadButton";
 import { downloadUrl } from "./downloader";
 
@@ -46,15 +46,42 @@ xhrIntercept(/voyager\/api\/feed\/updatesV2/, (response, type) => {
 	});
 });
 
-let posts: Map<string, HTMLCollection> = new Map(); 
-
-// get the first posts from dom and add button 
-
+let posts: Map<string, HTMLElement> = new Map(); 
 
 // get posts that come with 'updateV2' from dom, using 'mutationObserver', and then add the button 
-domNewElem(document, "scaffold-finite-scroll__content")
-// on feed
-.then((feed) => {
+domListenNewNodes(document, (nodes) => {
+	// check feed
+	let feed = nodes.find((n) => n.classList.contains("scaffold-finite-scroll__content"));
+	if(!feed) return;
+
+	// get the first posts from dom and add button 
+	Array.from(feed.getElementsByTagName("div"))
+	.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent}))		// get urn and put into object
+	.filter((e) => (e.urn && e.urn.startsWith("urn:li:activity:")))							// filter out non posts
+	.map((post) => {																		// find bottom bar to insert button
+		let bottomBar = post.post.getElementsByClassName("feed-shared-social-action-bar");	// get bottom buttons
+		return {
+			post: post.post,
+			urn: post.urn!,
+			bottomBar: bottomBar
+		};
+	})
+	.forEach((post) => {																// for each post
+		if(post.bottomBar && post.bottomBar.item(0)){									// when bottom bar
+			post.bottomBar.item(0)!.appendChild(makeDownloadButton(() => {				// add download button
+				const meta = postsMeta.get(post.urn);									// get meta info
+				if(meta){
+					meta.download(postsMeta)
+					.then(() => console.debug(`downloaded!`))
+					.catch((err) => console.error(`error downloading: ${err}`));
+				}
+				else{
+					console.error(`No reference for '${post.urn}' in 'updateV2' data`);
+				}
+			}));
+		}
+	});
+
 	// listen for new nodes
 	domListenNewNodes(feed, (elements) => {
 		// add button
@@ -62,7 +89,7 @@ domNewElem(document, "scaffold-finite-scroll__content")
 		.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent}))	// get urn and put into object
 		.filter((e) => (e.urn && e.urn.startsWith("urn:li:activity:")))						// filter out non posts
 		.map((post) => {																	// find bottom bar to insert button
-			let bottomBar = domNewElements(post.post, "feed-shared-social-action-bar");		// listen for botton buttons to render 
+			let bottomBar = domWaitNewElements(post.post, "feed-shared-social-action-bar");		// listen for bottom buttons to render 
 			return {
 				post: post.post,
 				urn: post.urn!,
@@ -85,4 +112,4 @@ domNewElem(document, "scaffold-finite-scroll__content")
 			})
 		});
 	})
-})
+});

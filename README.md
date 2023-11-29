@@ -38,7 +38,6 @@ $ yarn install && yarn build
 
 # TODO
 
-* scrape first posts from dom
 * adjust download icon margin, still scuffed in some screen sizes
 * make download multilpe images work
 * Add context menu to download different types of data, text, image or others
