@@ -1,9 +1,8 @@
 import { xhrIntercept } from "./xhrIntercept";
 import { LnPost, LnPosts } from "./post"
 import { jsonParseResponse, mapCat } from "./utils";
-import { domListenNewNodes, domWaitNewElem, domWaitNewElements } from "./domObserver";
+import { domListenNewNodes, domWaitNewElements } from "./domObserver";
 import { makeDownloadButton } from "./downloadButton";
-import { downloadUrl } from "./downloader";
 
 // posts, global
 let postsMeta: LnPosts = new Map();
@@ -46,17 +45,18 @@ xhrIntercept(/voyager\/api\/feed\/updatesV2/, (response, type) => {
 	});
 });
 
-let posts: Map<string, HTMLElement> = new Map(); 
+let posts: Map<string, string> = new Map(); 
 
 // get posts that come with 'updateV2' from dom, using 'mutationObserver', and then add the button 
 domListenNewNodes(document, (nodes) => {
 	// check feed
-	let feed = nodes.find((n) => n.classList.contains("scaffold-finite-scroll__content"));
+	// let feed = nodes.find((n) => n.classList.contains("scaffold-finite-scroll__content"));
+	let feed = nodes.find((n) => n.tagName === "MAIN");
 	if(!feed) return;
 
 	// get the first posts from dom and add button 
 	Array.from(feed.getElementsByTagName("div"))
-	.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent}))		// get urn and put into object
+	.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent ?? e.attributes.getNamedItem("data-urn")?.textContent})) // get urn and put into object
 	.filter((e) => (e.urn && e.urn.startsWith("urn:li:activity:")))							// filter out non posts
 	.map((post) => {																		// find bottom bar to insert button
 		let bottomBar = post.post.getElementsByClassName("feed-shared-social-action-bar");	// get bottom buttons
@@ -67,6 +67,10 @@ domListenNewNodes(document, (nodes) => {
 		};
 	})
 	.forEach((post) => {																// for each post
+		if(posts.get(post.urn)) return;													// check if exists
+
+		posts.set(post.urn, post.urn);
+
 		if(post.bottomBar && post.bottomBar.item(0)){									// when bottom bar
 			post.bottomBar.item(0)!.appendChild(makeDownloadButton(() => {				// add download button
 				const meta = postsMeta.get(post.urn);									// get meta info
@@ -86,7 +90,7 @@ domListenNewNodes(document, (nodes) => {
 	domListenNewNodes(feed, (elements) => {
 		// add button
 		elements
-		.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent}))	// get urn and put into object
+		.map((e) => ({post: e, urn: e.attributes.getNamedItem("data-id")?.textContent ?? e.attributes.getNamedItem("data-urn")?.textContent}))	// get urn and put into object
 		.filter((e) => (e.urn && e.urn.startsWith("urn:li:activity:")))						// filter out non posts
 		.map((post) => {																	// find bottom bar to insert button
 			let bottomBar = domWaitNewElements(post.post, "feed-shared-social-action-bar");		// listen for bottom buttons to render 
@@ -97,6 +101,10 @@ domListenNewNodes(document, (nodes) => {
 			};
 		})
 		.forEach((post) => {																// for each post
+			if(posts.get(post.urn)) return;													// check if exists
+
+			posts.set(post.urn, post.urn);	
+			
 			post.bottomBar.then((bottomBar) => {											// when bottom bar arrives
 				bottomBar.at(0)?.appendChild(makeDownloadButton(() => {						// add download button
 					const meta = postsMeta.get(post.urn);									// get meta info

@@ -1,9 +1,27 @@
-/* linkedin inlines icon and button text when screen width > 1200,
+/* linkedin inlines icon and button text,
  * so we add a margin to separate icon and text.
- * when width < 1200, the icon is put on top of the text, and the margin
- * makes it so the icon is weirdly left aligned, so we media query the width
+ * when the icon is put on top of the text, makes it so the icon is weirdly left aligned, so we media query the width
  * and change the margin accordingly
  */
+
+@media only screen and (max-width: 499px){
+	img.extensionDownloadIcon {
+		margin-right: 0px;
+	}
+}
+
+@media only screen and (min-width: 500px) and (max-width: 767px){
+	img.extensionDownloadIcon {
+		margin-right: 5px;
+	}
+}
+
+@media only screen and (min-width: 768px) and (max-width: 1199px){
+	img.extensionDownloadIcon {
+		margin-right: 0px;
+	}
+}
+
 @media only screen and (min-width: 1200px){
 	img.extensionDownloadIcon {
 		margin-right: 5px;
