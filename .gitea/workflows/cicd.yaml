@@ -11,7 +11,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: node-20
+    runs-on: dockerBuilder
     steps:
       - name: Clone repo
         uses: actions/checkout@v3
