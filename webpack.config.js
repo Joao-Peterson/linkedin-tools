@@ -19,6 +19,7 @@ module.exports = {
 	output: {
 		path: abs("dist"),
 		filename: "[name].js",
+		assetModuleFilename: 'images/[name][ext]',
 		clean: true,
 	},
 	resolve: {

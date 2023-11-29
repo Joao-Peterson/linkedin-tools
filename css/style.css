@@ -1,3 +1,11 @@
-img.extensionDownloadIcon {
-	margin-right: 5px;
+/* linkedin inlines icon and button text when screen width > 1200,
+ * so we add a margin to separate icon and text.
+ * when width < 1200, the icon is put on top of the text, and the margin
+ * makes it so the icon is weirdly left aligned, so we media query the width
+ * and change the margin accordingly
+ */
+@media only screen and (min-width: 1200px){
+	img.extensionDownloadIcon {
+		margin-right: 5px;
+	}
 }
