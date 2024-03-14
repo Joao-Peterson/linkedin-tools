@@ -25,16 +25,20 @@
 	],
 	"content_scripts": [
 		{
-			"css": ["style.css"],
 			"js": [
 				"inject.js"
 			],
-			"run_at": "document_start",
+			"run_at": "document_end",
 			"matches": [
 				"https://www.linkedin.com/feed/*",
 				"https://www.linkedin.com/posts/*",
 				"https://www.linkedin.com/feed/update/*"
 			]
+		},
+		{
+			"css": ["style.css"],
+			"run_at": "document_start",
+			"matches": ["https://www.linkedin.com/*"]
 		}
 	]
 }

@@ -33,6 +33,7 @@ $ yarn install && yarn build
 
 # Acknowledgements
 
+* [Twitter video downloader extension](https://github.com/mstfsnc/twitter-video-downloader-extension)
 * [Linkedin icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/linkedin)
 * [Bootstrap Download icon](https://icons.getbootstrap.com/icons/download/)
 

@@ -208,6 +208,7 @@ export class LnPost{
 							// suggested
 							case "com.linkedin.voyager.feed.render.FeedDiscoveryEntityComponent":
 							case "com.linkedin.voyager.feed.render.AggregatedContent":
+							case "com.linkedin.voyager.feed.render.AnnouncementComponent":
 							break;
 							
 							// unknown
