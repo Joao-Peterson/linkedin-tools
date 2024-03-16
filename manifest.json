@@ -10,8 +10,7 @@
 		"128": "images/icon128.png"
 	},
 	"permissions": [
-		"background",
-		"downloads"
+		"background"
 	],
 	"web_accessible_resources": [
 		{
