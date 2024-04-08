@@ -1,68 +1,31 @@
 import IconLight from './downloadLight.svg';
 import IconDark from './downloadDark.svg';
-
-// theme
-enum Theme{
-	light,
-	dark
-};
+import Button from './downloadButton.html';
+import { Theme } from './theme';
 
 // generate button
-export function makeDownloadButton(onClick: () => void) : HTMLElement{
+export function makeDownloadButton(theme: Theme, onClick: () => void) : HTMLElement{
 
-	// theme
-	var theme: Theme = Theme.light;
-
-	if(document.getElementsByTagName("html").item(0)?.classList.contains("theme--dark")){
-		theme = Theme.dark;
-	}
-
-	// make divs
-	var div = document.createElement("div");
-	div.classList.add('feed-shared-social-action-bar__action-button');
+	// create html button
+	let temp = document.createElement('template');
+	let html = Button.trim(); // Never return a space text node as a result
+	temp.innerHTML = html;
+	let button = temp.content.firstChild as HTMLElement;
 	
-	var span = document.createElement("span");
-	span.classList.add('artdeco-hoverable-trigger', 'artdeco-hoverable-trigger--content-placed-top', 'artdeco-hoverable-trigger--is-hoverable', 'ember-view');
-
-	var button = document.createElement("button");
-	// classes from other buttons
-	button.classList.add(
-		'social-actions-button',
-		'artdeco-button',
-		'artdeco-button--4',
-		'artdeco-button--tertiary',
-		'flex-wrap',
-		'artdeco-button--muted'
-	);
-	
-	button.onclick = () => {
+	// add click
+	button.getElementsByTagName('button').item(0)!.onclick = () => {
 		onClick();
 	};
 
 	// icons
-	var svg = document.createElement('img');
-	svg.width = 24;
-	svg.height = 24;
-	svg.classList.add("extensionDownloadIcon");
+	let svg = button.getElementsByTagName('img').item(0)!;
 	switch(theme){
-		case Theme.light:
-			svg.src = IconLight;
-			break;
+		case Theme.light: svg.src = IconLight;
+		break;
 			
-			case Theme.dark:
-			svg.src = IconDark;
-			break;
+		case Theme.dark:  svg.src = IconDark;
+		break;
 	}
 
-	var text = document.createElement("span");
-	text.classList.add('artdeco-button__text');
-	text.textContent = "Download";
-
-	// build
-	div.appendChild(span);
-	span.appendChild(button);
-	button.appendChild(svg);
-	button.appendChild(text);
-	
-	return div;
+	return button;
 }

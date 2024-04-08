@@ -1,6 +1,5 @@
 import { BlobReader, BlobWriter, ZipWriter } from "@zip.js/zip.js";
 import { downloadBlob, downloadUrl } from "./downloader";
-import { camelcase } from "./utils"
 
 // remote file
 export interface RemoteFile{
@@ -12,9 +11,6 @@ interface ZipFile {
 	path: string;
 	data: string | Buffer;
 };
-
-// posts
-export type LnPosts = Map<string, LnPost>; 
 
 // post
 export class LnPost{
@@ -100,10 +96,10 @@ export class LnPost{
 		}
 	}
 
-	public static parseLinkedinUpdate(LnUpdate: any): LnPosts | null{
-		if(!(LnUpdate?.included)) return null;
+	public static parseLinkedinUpdate(LnUpdate: any): Array<{urn: string, post: LnPost}>{
+		if(!(LnUpdate?.included)) throw new Error("No included update");
 
-		let posts: LnPosts = new Map();
+		let posts: Array<{urn: string, post: LnPost}> = [];
 
 		for(var include of LnUpdate.included){
 			// grab content type
@@ -128,7 +124,7 @@ export class LnPost{
 
 						let urn = include?.updateMetadata?.urn;
 						if(!urn){
-							console.warn(`Linkedin Tools: Could not get urn for type '${contentType}'`);
+							// console.debug(`Linkedin Tools: Could not get urn for type '${contentType}'`);
 							continue;
 						}
 
@@ -213,22 +209,22 @@ export class LnPost{
 							
 							// unknown
 							default:
-								console.warn(`Linkedin Tools: Could not parse content type '${contentType}', entityUrn: '${include?.entityUrn}'`);
+								// console.warn(`Linkedin Tools: Could not parse content type '${contentType}', entityUrn: '${include?.entityUrn}'`);
 							break;
 						}
 
 						if(post)
-							posts.set(urn, post);
+							posts.push({urn, post});
 
 						break;
 							
 					default:
-						console.debug(`Linkedin Tools: Ignoring parse of type '${includeType}', entityUrn: '${include?.entityUrn}'`);
+						// console.debug(`Linkedin Tools: Ignoring parse of type '${includeType}', entityUrn: '${include?.entityUrn}'`);
 					break;	
 				}
 			}
 			catch(e){
-				console.warn(`Linkedin Tools: Could not parse include type '${includeType}', entityUrn: '${include?.entityUrn}'. ` + e);
+				throw new Error(`Linkedin Tools: Could not parse include type '${includeType}', entityUrn: '${include?.entityUrn}'. ` + e);
 			}
 		}
 
@@ -464,3 +460,10 @@ export class LnExternal extends LnPost{
 		this.externalUrl = source;
 	}
 }
+
+function camelcase(str: string) {
+	return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
+		return index === 0 ? word.toLowerCase() : word.toUpperCase();
+	}).replace(/\s+/g, '');
+}
+

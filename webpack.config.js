@@ -3,20 +3,25 @@ const CopyPlugin = require('copy-webpack-plugin');
 const jsonCommented = require("comment-json");
 
 module.exports = {
-	devtool: 'cheap-module-source-map',
-	mode: "development",	
+	mode: "production",	
 	entry: {
-		inject: [
-			abs("src/inject.ts")
+		worker: [
+			abs("src/worker.ts")
 		],
-		bundle: [
-			abs("src/main.ts")
+		domSitter: [
+			abs("src/domSitter.ts")
+		],
+		xhrInterceptInject: [
+			abs("src/xhrInterceptInject.ts")
+		],
+		xhrIntercept: [
+			abs("src/xhrIntercept.ts")
 		]	
 	},
 	output: {
 		path: abs("dist"),
 		filename: "[name].js",
-		assetModuleFilename: 'images/[name][ext]',
+		assetModuleFilename: 'assets/[name][ext]',
 		clean: true,
 	},
 	resolve: {

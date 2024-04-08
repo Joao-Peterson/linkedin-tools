@@ -10,6 +10,7 @@
     "url": "https://joao-peterson.github.io"
   },
   "scripts": {
+    "debug": "webpack --devtool \"source-map\" --mode development",
     "build": "yarn webpack",
     "package": "zip -r package.zip dist/",
     "clear": "rm -rd dist/ package.zip"
@@ -27,6 +28,8 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@zip.js/zip.js": "^2.7.31"
+    "@types/mustache": "^4.2.5",
+    "@zip.js/zip.js": "^2.7.31",
+    "mustache": "^4.2.0"
   }
 }
