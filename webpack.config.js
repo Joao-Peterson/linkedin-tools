@@ -1,28 +1,24 @@
 const p = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 const jsonCommented = require("comment-json");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
 	mode: "production",	
 	entry: {
-		worker: [
-			abs("src/worker.ts")
-		],
-		domSitter: [
-			abs("src/domSitter.ts")
-		],
-		xhrInterceptInject: [
-			abs("src/xhrInterceptInject.ts")
+		main: [
+			abs("src/main.ts")
 		],
 		xhrIntercept: [
 			abs("src/xhrIntercept.ts")
-		]	
+		]
 	},
 	output: {
-		path: abs("dist"),
 		filename: "[name].js",
+		path: abs("dist"),
 		assetModuleFilename: 'assets/[name][ext]',
 		clean: true,
+		publicPath: ""
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js']
@@ -41,7 +37,10 @@ module.exports = {
 			},
 			// {
 			// 	test: /\.css$/,
-			// 	use: 'css-loader',
+			// 	use: [
+			// 		MiniCssExtractPlugin.loader,
+			// 		'css-loader'
+			// 	],
 			// 	exclude: /node_modules/
 			// },
 			{
@@ -70,16 +69,15 @@ module.exports = {
 					);
 				},
 			},
-			// css
-			{from: abs("css/style.css")},
+			// manual css
+			{from: abs("src/css/style.css"), to: ""},
 			// images
-			// {from: abs("images/downloadDark.svg"), to: "images"},
-			// {from: abs("images/downloadLight.svg"), to: "images"},
 			{from: abs("images/icon16.png"), to: "images"},
 			{from: abs("images/icon32.png"), to: "images"},
 			{from: abs("images/icon48.png"), to: "images"},
 			{from: abs("images/icon128.png"), to: "images"},
-		]})
+		]}),
+		new MiniCssExtractPlugin()
 	]
 }
 

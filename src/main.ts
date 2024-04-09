@@ -1,10 +1,34 @@
+import "./webpackPublicPathSet";
 import { LnPost } from "./linkedin";
 import { makeDownloadButton } from "./downloadButton";
+
+// inject xhrIntercept into DOM
+const element = document.createElement("script");
+element.src = chrome.runtime.getURL("xhrIntercept.js");
+(document.head || document.documentElement).appendChild(element);
+
+// global posts
+let posts: Map<string, LnPost> = new Map();
 
 // set of added buttons, to avoid duplication issues
 let seenPosts = new Set();
 
-export function domSitter(posts: Map<string, LnPost>){
+// listen for injected 'window.postMessage' and forward to background
+window.addEventListener("message", ev => {
+	// receiving updates
+	if(ev.data.interceptedUpdates){
+		let data: Array<{urn: string, post: LnPost}> = ev.data.interceptedUpdates;
+		
+		// store
+		data.forEach(e => posts.set(e.urn, e.post));
+	
+		console.debug("Posts update update!");
+		console.debug(posts);
+	}
+});
+
+// wait for page load
+document.addEventListener("DOMContentLoaded", () => {
 	// theme
 	let darkTheme = false;
 	if(document.getElementsByTagName("html").item(0)?.classList.contains("theme--dark"))
@@ -19,7 +43,11 @@ export function domSitter(posts: Map<string, LnPost>){
 			let json = JSON.parse(code.textContent);
 			let updates = LnPost.parseLinkedinUpdate(json);
 			if(updates.length == 0) continue;
-			window.postMessage({interceptedUpdates: updates}); 							// send out to downloader content script
+			// store
+			updates.forEach(e => posts.set(e.urn, e.post));
+			console.debug("Posts update!");
+			console.debug(posts);
+
 		}catch (e) {
 			console.warn(`Linkedin Tools: Could not parse code tag '${code.id}'. ` + e);
 		}
@@ -85,4 +113,4 @@ export function domSitter(posts: Map<string, LnPost>){
 	
 		// context menu
 	}
-}
+});

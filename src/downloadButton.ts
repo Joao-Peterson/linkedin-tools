@@ -1,10 +1,9 @@
-import IconLight from './downloadLight.svg';
-import IconDark from './downloadDark.svg';
-import Button from './downloadButton.html';
-import { Theme } from './theme';
+import IconLight from './icons/downloadLight.svg';
+import IconDark from './icons/downloadDark.svg';
+import Button from './html/downloadButton.html';
 
 // generate button
-export function makeDownloadButton(theme: Theme, onClick: () => void) : HTMLElement{
+export function makeDownloadButton(darkTheme: boolean, onClick: () => void) : HTMLElement{
 
 	// create html button
 	let temp = document.createElement('template');
@@ -19,13 +18,10 @@ export function makeDownloadButton(theme: Theme, onClick: () => void) : HTMLElem
 
 	// icons
 	let svg = button.getElementsByTagName('img').item(0)!;
-	switch(theme){
-		case Theme.light: svg.src = IconLight;
-		break;
-			
-		case Theme.dark:  svg.src = IconDark;
-		break;
-	}
+	if(darkTheme)
+		svg.src = IconDark;
+	else
+		svg.src = IconLight;
 
 	return button;
 }

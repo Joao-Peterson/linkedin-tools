@@ -7,12 +7,7 @@ export interface RemoteFile{
 	url: string;
 }
 
-interface ZipFile {
-	path: string;
-	data: string | Buffer;
-};
-
-// post
+// post class
 export class LnPost{
 	public author: string;
 	public urn: string;
@@ -21,8 +16,10 @@ export class LnPost{
 	public externalUrl?: string;
 	public resharedEntityUrn?: string;
 
+	
 	public include: any;
 	
+	// constructor
 	constructor(include: any){
 		this.include = include;
 		let author = include?.actor?.name?.text ?? "Unknown";
@@ -37,6 +34,7 @@ export class LnPost{
 		this.resharedEntityUrn = resharedEntityUrn ? resharedEntityUrn: undefined
 	}
 
+	// download this post, or other posts in case we have reposted content
 	public async download(otherPosts: Map<string, LnPost>): Promise<void>{
 		// download files first
 		if(this.files.length == 1){
@@ -96,6 +94,7 @@ export class LnPost{
 		}
 	}
 
+	// parse linkedin manifest and decode to posts
 	public static parseLinkedinUpdate(LnUpdate: any): Array<{urn: string, post: LnPost}>{
 		if(!(LnUpdate?.included)) throw new Error("No included update");
 
