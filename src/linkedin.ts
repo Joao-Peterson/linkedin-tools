@@ -7,15 +7,30 @@ export interface RemoteFile{
 	url: string;
 }
 
+// download type 
+export enum downloadOptions{
+	none = -1,
+    unknown = 0,
+    openExternal,
+    text,
+	textReshared,
+    image,
+    files,
+    video,
+    article,
+    pollData
+} 
+
 // post class
 export class LnPost{
 	public author: string;
 	public urn: string;
 	public files: RemoteFile[] = [];
+	public pollData?: string;
 	public text?: string | undefined;
 	public externalUrl?: string;
 	public resharedEntityUrn?: string;
-
+	public downloadType: downloadOptions = downloadOptions.none;
 	
 	public include: any;
 	
@@ -35,63 +50,89 @@ export class LnPost{
 	}
 
 	// download this post, or other posts in case we have reposted content
-	public async download(otherPosts: Map<string, LnPost>): Promise<void>{
-		// download files first
-		if(this.files.length == 1){
-			return downloadUrl(this.files[0].url, this.files[0].name);
+	public async fetchContent(option: downloadOptions, postsRefLookup: Map<string, LnPost>): Promise<{name: string; data: Blob}>{
+		let post: LnPost = this;
+		if(post.resharedEntityUrn){
+			let ext = postsRefLookup.get(post.resharedEntityUrn);
+			if(ext)
+				post = ext;
 		}
-		else if(this.files.length > 1){
-			// map all files to fetch promises and await all
-			return Promise.all(this.files.map((file) => 
-				fetch(file.url)
-				// get blob
-				.then((res) => res.blob())
-				// return blob with name
-				.then((blob) => ({name: file.name, blob: blob}))
-			))
-			// write zip
-			.then((files) => {
-				const zipWriter = new ZipWriter(new BlobWriter("application/zip"));
+		
+		switch(option){
+			// download files from any file related 'downloadOptions'
+			default:
+				if(post.files.length == 1){
+					let blob = await fetch(post.files[0].url).then(res => res.blob());
+					return {
+						name: post.files[0].name,
+						data: blob
+					};
+				}
+				else if(post.files.length > 1){
+					// map all files to fetch promises and await all
+					let zip = await Promise.all(this.files.map((file) => 
+						fetch(file.url)
+						// get blob
+						.then((res) => res.blob())
+						// return blob with name
+						.then((blob) => ({name: file.name, blob: blob}))
+					))
+					// write zip
+					.then((files) => {
+						const zipWriter = new ZipWriter(new BlobWriter("application/zip"));
+		
+						files.forEach((file) => {
+							zipWriter.add(file.name, new BlobReader(file.blob));
+						});
+		
+						// return zip blob
+						return zipWriter.close();
+					});
 
-				files.forEach((file) => {
-					zipWriter.add(file.name, new BlobReader(file.blob));
-				});
+					return {
+						name: post.uniqueName() + ".zip",
+						data: zip
+					};
+				}
+			break;
 
-				// return zip blob
-				return zipWriter.close();
-			})
-			// download zip
-			.then((zip) => downloadBlob(zip, this.uniqueName() + ".zip"));
+			// poll data as file
+			case downloadOptions.pollData:
+				if(!post.pollData) break;
+				let data = new Blob([post.pollData], {type: "text/plain"});
+				return {
+					name: post.uniqueName() + ".txt",
+					data: data
+				};
+			break;
+				
+			// the post text
+			case downloadOptions.text:
+				if(!this.text) break;
+				let text = new Blob([this.text], {type: "text/plain"});
+				return {
+					name: this.uniqueName() + ".txt",
+					data: text
+				};
+			break;
+			
+			// the reshared post text
+			case downloadOptions.textReshared:
+				if(!post.text) break;
+				let rtext = new Blob([ post.text], {type: "text/plain"});
+				return {
+					name: post.uniqueName() + ".txt",
+					data: rtext
+				};
+			break;
+					
+			// invalid cases
+			case downloadOptions.openExternal:
+			case downloadOptions.none:
+			break;
 		}
-		// reshared content
-		else if(this.resharedEntityUrn && otherPosts.size > 1){
-			let reshared = otherPosts.get(this.resharedEntityUrn!);
-			if(reshared){
-				return reshared.download(otherPosts);
-			}
-			else{
-				return Promise.reject(`reshared post '${this.resharedEntityUrn}' from '${this.urn}' is not on 'otherPosts' map passed`);
-			}
-		}
-		// then open external
-		else if(this.externalUrl){
-			return new Promise<void>((res) => {
-				window.open(this.externalUrl);
-				res();
-			});
-		}
-		// then download text
-		else if(this.text){
-			let blob = new Blob([this.text], {
-				type: "text/plain"
-			});
-
-			return downloadBlob(blob, this.uniqueName() + ".txt");
-		}
-		// otherwise reject
-		else{
-			return Promise.reject();
-		}
+		
+		throw new Error("Invalid fetch option");
 	}
 
 	// parse linkedin manifest and decode to posts
@@ -258,6 +299,11 @@ export class LnCarousel extends LnPost{
 				url: root + segment
 			});
 		}
+
+		if(this.files.length == 1)
+			this.downloadType = downloadOptions.image;
+		else
+			this.downloadType = downloadOptions.files;
 	}
 }
 
@@ -279,6 +325,11 @@ export class LnImages extends LnPost{
 				url: root + segment
 			});
 		}
+
+		if(this.files.length == 1)
+			this.downloadType = downloadOptions.image;
+		else
+			this.downloadType = downloadOptions.files;
 	}
 }
 
@@ -287,6 +338,7 @@ export class LnImage extends LnPost{
 
 	constructor(include: any){
 		super(include);
+		this.downloadType = downloadOptions.image;
 
 		let root: string | null | undefined = include?.content?.largeImage?.attributes[0]?.vectorImage?.rootUrl; 
 		let segment: string | null | undefined = include?.content?.largeImage?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
@@ -312,6 +364,7 @@ export class LnEvent extends LnPost{
 
 	constructor(include: any){
 		super(include);
+		this.downloadType = downloadOptions.image;
 
 		let root: string | null | undefined = include?.content?.banner?.attributes[0]?.vectorImage?.rootUrl; 
 		let segment: string | null | undefined = include?.content?.banner?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
@@ -331,13 +384,13 @@ export class LnPoll extends LnPost{
 
 	constructor(include: any, included: any){
 		super(include);
+		this.downloadType = downloadOptions.pollData;
 
 		let summary: string | null | undefined = include?.content?.['*pollSummary']; 
 		let question: string | null | undefined = include?.content?.question?.text; 
 		let options: any[] | null | undefined = include?.content?.pollOptions;
 
-		if(!question || !options || !summary)
-			return;
+		if(!question || !options || !summary) return;
 
 		let questionsArr: string[] = [];
 		for(let opt of options){
@@ -365,7 +418,7 @@ export class LnPoll extends LnPost{
 			}
 		}
 
-		this.text = poll;
+		this.pollData = poll;
 	}
 }
 
@@ -374,6 +427,7 @@ export class LnLead extends LnPost{
 
 	constructor(include: any){
 		super(include);
+		this.downloadType = downloadOptions.unknown;
 
 		let root: string | null | undefined = include?.leadGenFormContentV2?.content?.largeImage?.attributes[0]?.vectorImage?.rootUrl; 
 		let segment: string | null | undefined = include?.leadGenFormContentV2?.content?.largeImage?.attributes[0]?.vectorImage?.artifacts[0]?.fileIdentifyingUrlPathSegment; 
@@ -400,6 +454,7 @@ export class LnLead extends LnPost{
 export class LnDocument extends LnPost{
 	constructor(include: any){
 		super(include);
+		this.downloadType = downloadOptions.article;
 
 		let url = include?.content?.document?.transcribedDocumentUrl;
 		let title = include?.content?.document?.title;
@@ -442,6 +497,11 @@ export class LnVideo extends LnPost{
 				break;
 			}
 		}
+
+		if(this.files.length == 1)
+			this.downloadType = downloadOptions.video;
+		else
+			this.downloadType = downloadOptions.files;
 	}
 }
 
@@ -449,6 +509,7 @@ export class LnVideo extends LnPost{
 export class LnExternal extends LnPost{
 	constructor(include: any){
 		super(include);
+		this.downloadType = downloadOptions.openExternal;
 
 		let provider: string | undefined | null = include?.content?.provider;
 		let source: string | undefined | null = include?.content?.navigationContext?.actionTarget;

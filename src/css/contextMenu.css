@@ -23,8 +23,8 @@ nav.context-menu {
 } 
 
 .context-menu li { 
-	height: 2.2em;
-	padding-left: 1.5ex;
+	height: auto;
+	padding: 1.5ex !important;
 	display:flex;
 	align-items: start;
 	justify-content: start;

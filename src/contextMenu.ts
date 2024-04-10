@@ -17,23 +17,26 @@ export type MouseEventsMap = {
 }[keyof HTMLElementEventMap];
 
 // context menu class
-export class ContextMenu<T>{
+export class ContextMenu<S, T>{
 
 	// element id
-	id: string;
-	htmlId: string;
+	public id: string;
+	public htmlId: string;
 	
 	// context menu element
-	menu: HTMLElement;
+	public menu: HTMLElement;
 	
 	// callback
-	private callback: (source: string, data: T) => void;
+	private callback: (source: S, option: T) => void;
 
 	// items
-	items: ContextMenuItem<T>[] = [];
+	private _items: ContextMenuItem<T>[] = [];
+
+	// who showed the menu last
+	public origin?: S;
 
 	// constructor
-	constructor(callback: (source: string, data: T) => void, id?: string){
+	constructor(callback: (source: S, option: T) => void, id?: string){
 		this.id = id ?? uid(10);
 		this.htmlId = this.id + "-context-menu";
 		this.callback = callback;
@@ -78,24 +81,36 @@ export class ContextMenu<T>{
 	}
 	
 	// show menu
-	show(){
-		this.updateList();
+	show(source: S){
+		this.origin = source;
 		this.menu.style.display = "block";
 	}
 
 	// sync array with list
-	private updateList(){
+	set items(value: ContextMenuItem<T>[]){
+		this._items = value;
+		
 		// empty ul
 		let ul = (this.menu.firstElementChild! as HTMLElement);
 		ul.innerHTML = "";
 
 		// add items
-		for(let item of this.items){
+		for(let item of this._items){
 			let itemHtml = MenuItem;
 			itemHtml = itemHtml.replace(/{{icon}}/g, item.icon);
 			itemHtml = itemHtml.replace(/{{text}}/g, item.text);
 			ul.insertAdjacentHTML("beforeend", itemHtml);
+
+			// add callback
+			(ul.lastElementChild! as HTMLLIElement).addEventListener("click", ev => {
+				if(this.origin){
+					this.callback(this.origin, item.data);
+				}
+			});
 		}
 	}
-}
 
+	get items(){
+		return this._items;
+	}
+}

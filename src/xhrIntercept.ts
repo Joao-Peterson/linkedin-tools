@@ -75,8 +75,7 @@ xhrIntercept(/voyager\/api\/feed\/updatesV2/, (response, type) => {
 	jsonParseResponse(response, type)
 	.then((json) => {
 		try{
-			let updates = LnPost.parseLinkedinUpdate(json);
-			window.postMessage({interceptedUpdates: updates}); // send out to downloader content script
+			window.postMessage({interceptedUpdates: json}); 	// send out to downloader content script
 		}catch(error){
 			console.warn(error);		
 		}
