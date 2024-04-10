@@ -1,17 +1,27 @@
 import "./webpackPublicPathSet";
 import { LnPost } from "./linkedin";
-import { makeDownloadButton } from "./downloadButton";
+import { ContextMenu } from "./contextMenu";
+import downloadButton from './html/downloadButton.html';
 
 // inject xhrIntercept into DOM
-const element = document.createElement("script");
-element.src = chrome.runtime.getURL("xhrIntercept.js");
-(document.head || document.documentElement).appendChild(element);
+const injected = document.createElement("script");
+injected.src = chrome.runtime.getURL("xhrIntercept.js");
+(document.head || document.documentElement).appendChild(injected);
+
+const bootstrap = document.createElement("link");
+bootstrap.href = "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css";
+bootstrap.rel = 'stylesheet';
+bootstrap.type = 'text/css';
+(document.head || document.documentElement).appendChild(bootstrap);
 
 // global posts
 let posts: Map<string, LnPost> = new Map();
 
 // set of added buttons, to avoid duplication issues
-let seenPosts = new Set();
+let seenPosts = new Set<string>();
+
+// set of context menus for the download buttons
+let addedPostMenus = new Set<string>();
 
 // listen for injected 'window.postMessage' and forward to background
 window.addEventListener("message", ev => {
@@ -32,7 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	// theme
 	let darkTheme = false;
 	if(document.getElementsByTagName("html").item(0)?.classList.contains("theme--dark"))
-		darkTheme = true;;
+		darkTheme = true;
+
+	// context menu
+	let downloadMenu = new ContextMenu<string>((source, data) => {
+		console.log(`Context from ${source}, data: ${data}`)
+	});
 	
 	// scrape html 'code' tags for posts metadata
 	for(let code of Array.from(document.getElementsByTagName('code'))){
@@ -69,21 +84,15 @@ document.addEventListener("DOMContentLoaded", () => {
 				if(seenPosts.has(urn)) return;											// check if added before
 				seenPosts.add(urn);
 		
-				bar.appendChild(makeDownloadButton(darkTheme, () => {					// add download button
-					console.debug(`click for ${urn}`);
-	
-	
-	
-					// const meta = postsMeta.get(post.urn);									// get meta info
-					// if(meta){
-					// 	meta.download(postsMeta)
-					// 	.then(() => console.debug(`downloaded!`))
-					// 	.catch((err) => console.error(`error downloading: ${err}`));
-					// }
-					// else{
-					// 	console.error(`No reference for '${post.urn}' in 'updateV2' data`);
-					// }
-				}));
+				bar.insertAdjacentHTML("beforeend", downloadButton);					// add download button
+				downloadMenu.addMenuEventListener(bar.lastElementChild! as HTMLElement, "click", ev => {
+					if(downloadMenu.hidden){
+						downloadMenu.items = [];
+						const post = posts.get(urn);
+						downloadMenu.items.push({icon: "bi-blockquote-left", text: "Text", data: post!.text!})
+						downloadMenu.show();
+					}
+				})
 			}
 		}
 	}

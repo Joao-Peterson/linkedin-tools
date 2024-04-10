@@ -23,7 +23,10 @@
 	"content_scripts": [
 		{
 			"js": ["main.js"],
-			"css": ["style.css"],
+			"css": [
+				"style.css",
+				"contextMenu.css"
+			],
 			"run_at": "document_start",						// we must intercept every request before it responds back
 			"matches": [
 				"https://www.linkedin.com/",				// added this because the main likedin page makes some xhr requests to get the first posts metadata BEFORE redirecting to the 'feed/' page, which also needs intercept 

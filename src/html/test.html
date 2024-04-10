@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+	<style>
+		.context-menu {
+			padding: 0ex;
+			margin: 0ex;
+		} 
+
+		.context-menu nav { 
+			position: absolute;
+			transform-origin: top left;
+			min-width: 20ex;
+			max-width: 40ex;
+			vertical-align: auto;
+			z-index: 100;
+		} 
+		
+		.context-menu ul {
+			/* background:rgba(250,250,250,0.98); */
+			/* box-shadow:2px 2px 12px 4px rgba(100,100,100,0.4); */
+			/* border:1px solid rgba(100,100,100,0.55); */
+			border-radius: 1ex;
+			clip-path: view-box;
+		} 
+
+		.context-menu li { 
+			height: 2.2em;
+			padding-left: 1.5ex;
+			display:flex;
+			align-items:center;
+			cursor:pointer;
+			/* color:rgba(50,50,50,0.9); */
+		} 
+
+		.context-menu p { 
+			padding-left: 1.5ex;
+			padding-right: 1.5ex;
+		} 
+
+		.context-menu i {
+			scale: 1;
+		} 
+
+		.context-menu ul li:hover { 
+			/* background: darkgray;  */
+		} 
+	</style>
+</head>
+<body>
+	<nav id="{{id}}-context-menu" class="context-menu artdeco-button artdeco-button--tertiary">
+		<ul id="{{id}}-context-menu-items" class="context-menu artdeco-button artdeco-button--tertiary">
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-box-arrow-up-right"></i>
+				<p>Open external</p>
+			</li>
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-blockquote-left"></i>
+				<p>Text</p>
+			</li>
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-image"></i>
+				<p>Image</p>
+			</li>
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-images"></i>
+				<p>Images</p>
+			</li>
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-film"></i>
+				<p>Video</p>
+			</li>
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-filetype-pdf"></i>
+				<p>Article</p>
+			</li>
+			<li class="context-menu artdeco-button__text artdeco-hoverable-trigger artdeco-hoverable-trigger--content-placed-top artdeco-hoverable-trigger--is-hoverable">
+				<i class="bi bi-card-text"></i>
+				<p>Poll data</p>
+			</li>
+		</ul>
+	</nav>
+</body>
+</html>

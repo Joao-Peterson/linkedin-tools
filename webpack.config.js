@@ -71,6 +71,7 @@ module.exports = {
 			},
 			// manual css
 			{from: abs("src/css/style.css"), to: ""},
+			{from: abs("src/css/contextMenu.css"), to: ""},
 			// images
 			{from: abs("images/icon16.png"), to: "images"},
 			{from: abs("images/icon32.png"), to: "images"},

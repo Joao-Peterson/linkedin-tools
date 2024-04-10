@@ -1,3 +1,47 @@
-a {
-	color: green;
-}
+.context-menu {
+	padding: 0ex;
+	margin: 0ex;
+} 
+
+nav.context-menu { 
+	position: absolute;
+	transform-origin: top left;
+	min-width: 20ex;
+	max-width: 40ex;
+	vertical-align: auto;
+	box-shadow: none !important;
+	z-index: 100;
+	border-radius: .5ex !important;
+} 
+
+.context-menu ul {
+	/* background:rgba(250,250,250,0.98); */
+	/* box-shadow:2px 2px 12px 4px rgba(100,100,100,0.4); */
+	/* border:1px solid rgba(100,100,100,0.55); */
+	border-radius: .5ex !important;
+	clip-path: view-box !important;
+} 
+
+.context-menu li { 
+	height: 2.2em;
+	padding-left: 1.5ex;
+	display:flex;
+	align-items: start;
+	justify-content: start;
+	cursor:pointer;
+	/* color:rgba(50,50,50,0.9); */
+	font-size: 1.4rem;
+} 
+
+.context-menu span { 
+	padding-left: 1.5ex;
+	padding-right: 1.5ex;
+} 
+
+.context-menu i {
+	font-size: 1.5em;
+} 
+
+/* .context-menu ul li:hover { 
+	background: darkgray; 
+}  */

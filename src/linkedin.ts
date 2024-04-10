@@ -1,5 +1,5 @@
 import { BlobReader, BlobWriter, ZipWriter } from "@zip.js/zip.js";
-import { downloadBlob, downloadUrl } from "./downloader";
+import { downloadBlob, downloadUrl } from "./download";
 
 // remote file
 export interface RemoteFile{

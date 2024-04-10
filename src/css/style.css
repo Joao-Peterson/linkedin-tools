@@ -5,25 +5,25 @@
  */
 
 @media only screen and (max-width: 499px){
-	img.extensionDownloadIcon {
+	i.extensionDownloadIcon {
 		margin-right: 0px;
 	}
 }
 
 @media only screen and (min-width: 500px) and (max-width: 767px){
-	img.extensionDownloadIcon {
+	i.extensionDownloadIcon {
 		margin-right: 5px;
 	}
 }
 
 @media only screen and (min-width: 768px) and (max-width: 1199px){
-	img.extensionDownloadIcon {
+	i.extensionDownloadIcon {
 		margin-right: 0px;
 	}
 }
 
 @media only screen and (min-width: 1200px){
-	img.extensionDownloadIcon {
+	i.extensionDownloadIcon {
 		margin-right: 5px;
 	}
 }
