@@ -1,7 +1,7 @@
 {
   "name": "linkedin-tools",
   "description": "Set of tools for Linkedin",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "license": "MIT",
   "private": true,
   "author": {
@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@zip.js/zip.js": "^2.7.31",
-    "mini-css-extract-plugin": "^2.8.1",
-    "simple_js_menu": "^1.0.3"
+    "mini-css-extract-plugin": "^2.8.1"
   }
 }

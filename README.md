@@ -43,5 +43,5 @@ $ yarn install && yarn build
 
 # TODO
 
-* add support for profile activity page
-* add context menu to download different types of data, text, image or others
+* make the content script only scrape and move the `posts` global var to a background worker, so we can maintain context between page redirects, as it's the case with the linkedin redirect from `linkedin.com` to `linkedin.com/feed` when we visit the home page the first time. In this last case we lose some info about the first posts.
+* some times when navigating pages or accessing it for the first time, the button is not injected, a reload may be necessary, fix this! 
