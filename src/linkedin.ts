@@ -1,5 +1,6 @@
 import { BlobReader, BlobWriter, ZipWriter } from "@zip.js/zip.js";
 import { downloadBlob, downloadUrl } from "./download";
+import { uid } from "./uid";
 
 // remote file
 export interface RemoteFile{
@@ -40,7 +41,7 @@ export class LnPost{
 		let author = include?.actor?.name?.text ?? "Unknown";
 		
 		this.author = author;
-		this.urn = include.updateMetadata.urn;
+		this.urn = include?.updateMetadata?.urn ?? include?.metadata?.backendUrn;
 
 		this.text = this.getText();
 		let resharedEntityUrnRaw = include?.['*resharedUpdate'];
@@ -150,23 +151,38 @@ export class LnPost{
 			try{	
 				switch(includeType){
 					// updates
+					case "com.linkedin.voyager.dash.feed.Update":
 					case "com.linkedin.voyager.feed.render.UpdateV2":
 						// content
 						contentType = include?.content?.$type;
 						// else grab carousel type
-						if(!contentType) contentType = include?.carouselContent?.$type;
+						if(!contentType)
+							contentType = include?.carouselContent?.$type;
+						
 						// else grab lead
-						if(!contentType) contentType = include?.leadGenFormContentV2?.$type;
+						if(!contentType)
+							contentType = include?.leadGenFormContentV2?.$type;
+						
 						// else, suggested (aggregatedContent)
-						if(!contentType) contentType = include?.aggregatedContent?.$type;
+						if(!contentType)
+							contentType = include?.aggregatedContent?.$type;
+						
+						// else, documentComponent
+						if(!contentType)
+							contentType = include?.content?.documentComponent?.$type;
+						
 						// else, just the text
-						if(!contentType) contentType = include?.commentary?.$type;
+						if(!contentType)
+							contentType = include?.commentary?.$type;
+						
 
-						let urn = include?.updateMetadata?.urn;
-						if(!urn){
-							// console.debug(`Linkedin Tools: Could not get urn for type '${contentType}'`);
+						// urn
+						let urn: string;
+						urn = include?.updateMetadata?.urn;
+						if(!urn)
+							urn = include?.metadata?.backendUrn;
+						if(!urn)
 							continue;
-						}
 
 						let post: LnPost | undefined;
 
@@ -188,6 +204,10 @@ export class LnPost{
 		
 							// image
 							case "com.linkedin.voyager.feed.render.ArticleComponent":
+							// celebration, new jobs (celebration)
+							case "com.linkedin.voyager.feed.render.CelebrationComponent":
+							// promoted content
+							case "com.linkedin.voyager.feed.render.PromoComponent":
 								post = new LnImage(include);
 							break;							
 		
@@ -198,9 +218,10 @@ export class LnPost{
 		
 							// documents
 							case "com.linkedin.voyager.feed.render.DocumentComponent":
+							case "com.linkedin.voyager.dash.feed.component.document.DocumentComponent":
 								post = new LnDocument(include);
 							break;							
-								
+
 							// text
 							case "com.linkedin.voyager.feed.render.TextComponent":
 								post = new LnPost(include);
@@ -218,30 +239,17 @@ export class LnPost{
 
 							// youtube (ExternalVideoComponent)
 							case "com.linkedin.voyager.feed.render.ExternalVideoComponent":
-								post = new LnExternal(include);
-							break;
-				
 							// expert answers (conversation)
 							case "com.linkedin.voyager.feed.render.ConversationsComponent":
 								post = new LnExternal(include);
 							break;
-							
-							// celebration, new jobs (celebration)
-							case "com.linkedin.voyager.feed.render.CelebrationComponent":
-								post = new LnImage(include);
-							break;
-
-							// promoted content
-							case "com.linkedin.voyager.feed.render.PromoComponent":
-								post = new LnImage(include);
-							break;
-
+				
 							// poll
 							case "com.linkedin.voyager.feed.render.PollComponent":
 								post = new LnPoll(include, LnUpdate.included);
 							break;
 				
-							// suggested
+							// suggested / promoted
 							case "com.linkedin.voyager.feed.render.FeedDiscoveryEntityComponent":
 							case "com.linkedin.voyager.feed.render.AggregatedContent":
 							case "com.linkedin.voyager.feed.render.AnnouncementComponent":
@@ -249,7 +257,7 @@ export class LnPost{
 							
 							// unknown
 							default:
-								// console.warn(`Linkedin Tools: Could not parse content type '${contentType}', entityUrn: '${include?.entityUrn}'`);
+								console.debug(`Linkedin Tools: Could not parse content type '${contentType}', entityUrn: '${include?.entityUrn}'`);
 							break;
 						}
 
@@ -259,7 +267,7 @@ export class LnPost{
 						break;
 							
 					default:
-						// console.debug(`Linkedin Tools: Ignoring parse of type '${includeType}', entityUrn: '${include?.entityUrn}'`);
+						console.debug(`Linkedin Tools: Ignoring parse of type '${includeType}', entityUrn: '${include?.entityUrn}'`);
 					break;	
 				}
 			}
@@ -272,7 +280,7 @@ export class LnPost{
 	}
 
 	protected uniqueName(): string{
-		return camelcase(this.author) + "-" + crypto.randomUUID();
+		return camelcase(this.author) + "-" + uid(10);
 	}
 
 	protected getText(): string | undefined{
@@ -456,8 +464,8 @@ export class LnDocument extends LnPost{
 		super(include);
 		this.downloadType = downloadOptions.article;
 
-		let url = include?.content?.document?.transcribedDocumentUrl;
-		let title = include?.content?.document?.title;
+		let url = include?.content?.document?.transcribedDocumentUrl ?? include?.content?.documentComponent?.document?.transcribedDocumentUrl;
+		let title = include?.content?.document?.title ?? include?.content?.documentComponent?.document?.title;
 
 		if(!url || ! title)
 			return;

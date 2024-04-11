@@ -93,9 +93,11 @@ document.addEventListener("DOMContentLoaded", () => { setTimeout(() => {
         // console.log(`Context from ${source.author}, data: ${downloadOptions[data]}`);
         const post = posts.get(source);
         if(post){
+            document.body.style.cursor = "wait";
             post.fetchContent(option, posts)
             .then(blob => downloadBlob(blob.data, blob.name))
-            .catch(err => console.warn(err));
+            .catch(err => console.warn(err))
+            .finally(() => document.body.style.cursor = "auto");
         }
     });
     
@@ -174,4 +176,4 @@ document.addEventListener("DOMContentLoaded", () => { setTimeout(() => {
         // context menu
     }
     
-}, 200)});
+}, 500)});
